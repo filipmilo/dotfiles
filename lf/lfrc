@@ -1,0 +1,109 @@
+#----------------------CONFGIURATION------------------------#
+
+# Shell
+set shell bash					# Use zsh
+set shellopts '-eu'				# -e = exit on error, -u = give error for unset variables
+set ifs "\n"
+
+# Appearance
+set ratios 1:2					# No backward previews
+set icons true					# Icons
+set period 1                    		# Update in seconds
+
+# Functionality
+set ignorecase true				# Ignore case in searches
+
+# Image previews
+set previewer stpv
+set cleaner stpvimgclr
+&stpvimg --listen $id
+
+#-----------------------REMAPPING---------------------------#
+
+# Open
+map <enter> open
+
+# Open directory in editor
+map <c-n> $nvim .
+
+# Open terminal in working directory
+map <c-t> &alacritty --working-directory $PWD
+
+# Dragon
+map <c-d> &dragon "$f"
+
+# Unarchive
+map <c-e> unarchive
+
+# Executables
+map x $$f						# Execute file if executable
+map X !$f						# Execute file and wait for user input
+
+# Files/Folders
+map <f-6> push %touch<space>	# Make a file
+map <f-7> push %mkdir<space>	# Make a directory
+map <f-8> delete				# Delete selection
+
+# Jumping folders
+map gr cd /							# Goto root
+map gd cd ~/Documents				# Goto documents
+map gD cd ~/Downloads				# Goto documents
+map gc cd ~/.config					# Goto config
+map gH cd /hdd						# Goto hdd
+map gu cd ~/USB						# Goto usb
+
+# Renaming
+map r							                # Unmap default rename
+map rc push :rename<enter><a-b><a-b><a-f><c-u>	# Change whole name
+map ra push :rename<enter><a-b><a-b><a-f>       # Append to name
+
+#-----------------------FUNCTIONS---------------------------#
+
+# Progress for copying
+cmd paste &{{
+    set -- $(cat ~/.local/share/lf/files)
+    mode="$1"
+    shift
+    case "$mode" in
+        copy)
+            rsync -av --ignore-existing --progress -- "$@" . |
+            stdbuf -i0 -o0 -e0 tr '\r' '\n' |
+            while IFS= read -r line; do
+                lf -remote "send $id echo $line"
+            done
+            ;;
+        move) mv -n -- "$@" .;;
+    esac
+    rm ~/.local/share/lf/files
+    lf -remote "send clear"
+    lf -remote "send $id reload"
+}}
+
+# Extracting archives
+cmd unarchive ${{
+	case "$f" in
+		*.7z) 7za -y x "$f" ;;
+		*.zip) unzip "$f" ;;
+		*.rar) unrar x "$f" ;;
+		*.tar) tar -xvf "$f" ;;
+		*.tar.gz) tar -xzvf "$f" ;;
+		*) lf -remote "send $id echomsg "$f\ is\ an\ unsupported\ archive\ format.""
+	esac
+}}
+
+# Image previews
+cmd on-quit $stpvimg --end $id
+
+# Rifle
+cmd open ${{
+    case $(file --mime-type "$(readlink -f $f)" -b) in
+        application/vnd.openxmlformats-officedocument.spreadsheetml.sheet) localc $fx ;;
+	    application/pdf) setsid -f zathura $fx >/dev/null 2>&1 ;;
+        text/*|application/json|inode/x-empty) $EDITOR $fx ;;
+        image/*) feh -F --start-at $f ;;
+        audio/*) mpv --audio-display=no --input-conf=~/.config/mpv/input.conf $f ;;
+	    video/*) setsid -f mpv $f -quiet >/dev/null 2>&1 ;;
+        application/octet-stream|application/vnd.microsoft.portable-executable) WINEPREFIX=/hdd/.wine wine $f ;;
+        *) for f in $fx; do setsid -f xdg-open $f >/dev/null 2>&1; done ;;
+    esac
+}}

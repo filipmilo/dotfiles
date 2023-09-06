@@ -1,0 +1,53 @@
+#
+#  ____ _____  _    ____  ____  _   _ ___ ____        _____ ___  __  __ _
+# / ___|_   _|/ \  |  _ \/ ___|| | | |_ _|  _ \      |_   _/ _ \|  \/  | |
+# \___ \ | | / _ \ | |_) \___ \| |_| || || |_) |       | || | | | |\/| | |
+#  ___) || |/ ___ \|  _ < ___) |  _  || ||  __/   _    | || |_| | |  | | |___
+# |____/ |_/_/   \_\_| \_\____/|_| |_|___|_|     (_)   |_| \___/|_|  |_|_____|
+#
+
+# Get editor completions based on the config schema
+"$schema" = 'https://starship.rs/config-schema.json'
+
+# Inserts a blank line between shell prompts
+add_newline = false
+
+# Prompt(the colours won't be what is written, but they will be of the same type)
+format = """
+[┌─ ](bold green)$username-$hostname:$directory$cmd_duration$git_branch$git_state
+[└> ](bold green)
+"""
+
+[hostname]
+ssh_only = false
+format = "[$hostname](bold green)"
+
+[username]
+show_always = true
+format = "[$user]($style)"
+style_user = "bold green"
+style_root = "bold black"
+
+[directory]
+format = "[$path](bold blue)[$read_only](yellow) "
+home_symbol = "~"
+truncation_length = 5			#if there are too many directories
+truncation_symbol = "…/"		#write this
+truncate_to_repo = false		#fix formating in git folders
+
+[git_branch]
+format = "[on  ](green)[$branch](green)"
+
+[cmd_duration]
+min_time = 5_000
+format = " (took [$duration](red))"
+
+[package]
+disabled = true
+
+[git_state]
+format = '[\($state( $progress_current of $progress_total)\)]($style) '
+
+[golang]
+format = 'via [go $version](bold cyan) '
+
